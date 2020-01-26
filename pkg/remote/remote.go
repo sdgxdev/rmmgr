@@ -150,7 +150,9 @@ func (s *BaseTRPCService) PrepareRemote() (string, error) {
 					sshTargetAddr,
 					s.ServiceBinName,
 				)
-				panic(err)
+				if err == io.EOF {
+					break
+				}
 			}
 			lineStr := strings.TrimRight(string(line), "\n")
 			log.Printf("[Remote(%s)]%s", sshTargetAddr, lineStr)
