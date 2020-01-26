@@ -9,8 +9,8 @@ import socket
 import time
 
 
-class UnixHTTPServer(BaseHTTPServer.HTTPServer):
-    address_family = socket.AF_UNIX
+class TcpHTTPServer(BaseHTTPServer.HTTPServer):
+    address_family = socket.AF_INET
 
     def server_bind(self):
         SocketServer.TCPServer.server_bind(self)
@@ -32,8 +32,8 @@ Handler.protocol_version = "HTTP/1.1"
 Handler.log_message = log_message
 
 
-bind_addr = "/tmp/.http_server_%d" % os.getpid()
-server = UnixHTTPServer(bind_addr, Handler)
+bind_addr = ("127.0.0.1", 0)
+server = TcpHTTPServer(bind_addr, Handler)
 
 
 def sig_handler(signum, frame):
@@ -48,5 +48,5 @@ signal.signal(signal.SIGHUP, sig_handler)
 if len(sys.argv) > 0:
     wait_time = int(sys.argv[1])
     time.sleep(wait_time)
-print "listen on:%s" % bind_addr
+print "listen on:%s:%d" % (server.server_address[0], server.server_address[1])
 server.serve_forever()

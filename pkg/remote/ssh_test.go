@@ -52,7 +52,7 @@ func TestSSHConfig(t *testing.T) {
 		t.Errorf("failed to build SSHClientConfig: %s", err)
 	}
 
-	hostAndPort := fmt.Sprintf("%s:%d", opts.host, 2222)
+	hostAndPort := fmt.Sprintf("%s:%d", opts.host, sshPass.port)
 	connectFunc := ConnectFunc("tcp", hostAndPort)
 
 	conn, err := connectFunc()
@@ -240,7 +240,7 @@ func TestSSHCommunicatorCreateConn(t *testing.T) {
 	}
 	cmdStderr = new(bytes.Buffer)
 	cmd = Cmd{
-		Command: "./test_rest_server.py",
+		Command: "./test_rest_server.py 1",
 		Stdin: os.Stdin,
 		Stdout: w,
 		Stderr: cmdStderr,
@@ -253,7 +253,8 @@ func TestSSHCommunicatorCreateConn(t *testing.T) {
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)
-	var usockAddr string
+	var bindHost string
+	var bindPort string
 	go func() {
 		reader := bufio.NewReader(r)
 		line, _, err := reader.ReadLine()
@@ -264,17 +265,18 @@ func TestSSHCommunicatorCreateConn(t *testing.T) {
 			t.Fatalf("invalid return: %s", line)
 		}
 		tmpLineRec := strings.Split(strings.TrimRight(string(line), "\n"), ":")
-		if len(tmpLineRec) != 2 {
+		if len(tmpLineRec) != 3 {
 			t.Fatalf("server returns invalid usock addr: %s", string(line))
 		}
-		usockAddr = tmpLineRec[1]
+		bindHost = tmpLineRec[1]
+		bindPort = tmpLineRec[2]
 		wg.Done()
 	}()
 	wg.Wait()
-	t.Logf("rest api server started remotely and listen on unix socket: %s", usockAddr)
+	t.Logf("rest api server started remotely and listen on: %s:%s", bindHost, bindPort)
 
 	time.Sleep(time.Second)
-	conn, err := comm.CreateConn("unix", usockAddr)
+	conn, err := comm.CreateConn("tcp", fmt.Sprintf("%s:%s", bindHost, bindPort))
 	if err != nil {
 		t.Fatalf("failed to create tunnel connection: %s", err)
 	}
