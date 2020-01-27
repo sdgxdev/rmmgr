@@ -155,10 +155,11 @@ func (s *BaseTRPCService) PrepareRemote() (string, error) {
 				}
 			}
 			lineStr := strings.TrimRight(string(line), "\n")
-			log.Printf("[Remote(%s)]%s", sshTargetAddr, lineStr)
+			log.Printf("[Remote(%s)]%s\n", sshTargetAddr, lineStr)
 			if !parsed {
 				if addr, ok := s.ListenAddrParseFunc(lineStr); ok {
 					addrChan <- addr
+					parsed = true
 				}
 			}
 		}
